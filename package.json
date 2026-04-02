@@ -1,0 +1,37 @@
+{
+  "name": "villa-elara-backend",
+  "version": "1.0.0",
+  "description": "Villa Elara direct-booking backend API",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "seed": "ts-node prisma/seed.ts",
+    "create-admin": "ts-node scripts/createAdmin.ts",
+    "test": "jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.7",
+    "nodemailer": "^6.9.16",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.13.10",
+    "@types/nodemailer": "^6.4.17",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

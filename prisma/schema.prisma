@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+model Villa {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  description         String
+  shortDescription    String   @map("short_description")
+  maxGuests           Int      @default(10) @map("max_guests")
+  basePricePerNight   Decimal  @map("base_price_per_night") @db.Decimal(10, 2)
+  touristTaxPerNight  Decimal  @default(15) @map("tourist_tax_per_night") @db.Decimal(10, 2)
+  minNights           Int      @default(2) @map("min_nights")
+  maxNights           Int?     @map("max_nights")
+  checkInTime         String   @default("15:00") @map("check_in_time")
+  checkOutTime        String   @default("11:00") @map("check_out_time")
+  address             String
+  latitude            Decimal? @db.Decimal(10, 7)
+  longitude           Decimal? @db.Decimal(10, 7)
+  amenities           Json     @default("[]")
+  houseRules          String?  @map("house_rules")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  images       VillaImage[]
+  bookings     Booking[]
+  blockedDates BlockedDate[]
+  pricingRules PricingRule[]
+
+  @@map("villas")
+}
+
+model VillaImage {
+  id           Int      @id @default(autoincrement())
+  villaId      Int      @map("villa_id")
+  imageUrl     String   @map("image_url")
+  altText      String   @map("alt_text")
+  displayOrder Int      @default(0) @map("display_order")
+  isHero       Boolean  @default(false) @map("is_hero")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  villa Villa @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@map("villa_images")
+}
+
+model Booking {
+  id                 Int       @id @default(autoincrement())
+  villaId            Int       @map("villa_id")
+  referenceCode      String    @unique @map("reference_code")
+  guestName          String    @map("guest_name")
+  guestEmail         String    @map("guest_email")
+  guestPhone         String    @map("guest_phone")
+  checkIn            DateTime  @map("check_in") @db.Date
+  checkOut           DateTime  @map("check_out") @db.Date
+  numGuests          Int       @map("num_guests")
+  numNights          Int       @map("num_nights")
+  nightlyRate        Decimal   @map("nightly_rate") @db.Decimal(10, 2)
+  touristTaxTotal    Decimal   @map("tourist_tax_total") @db.Decimal(10, 2)
+  totalPrice         Decimal   @map("total_price") @db.Decimal(10, 2)
+  status             String    @default("pending")
+  adminNotes         String?   @map("admin_notes")
+  guestMessage       String?   @map("guest_message")
+  cancellationReason String?   @map("cancellation_reason")
+  confirmedAt        DateTime? @map("confirmed_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  villa        Villa         @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  blockedDates BlockedDate[]
+
+  @@map("bookings")
+}
+
+model BlockedDate {
+  id        Int      @id @default(autoincrement())
+  villaId   Int      @map("villa_id")
+  date      DateTime @db.Date
+  reason    String
+  bookingId Int?     @map("booking_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  villa   Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@unique([villaId, date])
+  @@map("blocked_dates")
+}
+
+model PricingRule {
+  id            Int      @id @default(autoincrement())
+  villaId       Int      @map("villa_id")
+  name          String
+  startDate     DateTime @map("start_date") @db.Date
+  endDate       DateTime @map("end_date") @db.Date
+  pricePerNight Decimal  @map("price_per_night") @db.Decimal(10, 2)
+  minNights     Int?     @map("min_nights")
+  priority      Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  villa Villa @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@map("pricing_rules")
+}
