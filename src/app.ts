@@ -2,13 +2,18 @@ import express from "express";
 import cors from "cors";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
+import routes from "./routes";
 
 const app = express();
 
 // Middleware
+const allowedOrigins = [env.FRONTEND_URL];
+if (env.NODE_ENV === "development") {
+  allowedOrigins.push("http://localhost:5173", "http://localhost:3000");
+}
 app.use(
   cors({
-    origin: [env.FRONTEND_URL, "http://localhost:5173"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -19,10 +24,10 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Routes will be mounted here in later phases
-// app.use("/api", routes);
+// Routes
+app.use("/api", routes);
 
-// Error handler (must be last)
+// Error handler
 app.use(errorHandler);
 
 export default app;
