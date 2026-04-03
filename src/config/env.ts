@@ -10,7 +10,7 @@ const envSchema = z.object({
   // Auth
   JWT_SECRET: z.string().min(1),
   JWT_EXPIRES_IN: z.string().default("7d"),
-  ADMIN_EMAIL: z.string().email(),
+  ADMIN_USERNAME: z.string().min(1),
   ADMIN_PASSWORD: z.string().min(8),
 
   // Cloudinary
