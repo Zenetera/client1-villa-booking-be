@@ -5,46 +5,49 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Seed admin user
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminUsername = process.env.ADMIN_USERNAME;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!adminEmail || !adminPassword) {
-    console.error("ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env");
+  if (!adminUsername || !adminPassword) {
+    console.error("ADMIN_USERNAME and ADMIN_PASSWORD must be set in .env");
     process.exit(1);
   }
 
   const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
   await prisma.admin.upsert({
-    where: { email: adminEmail },
+    where: { username: adminUsername },
     update: {},
     create: {
-      email: adminEmail,
+      username: adminUsername,
       password: hashedPassword,
     },
   });
 
-  console.log(`Admin user created/verified: ${adminEmail}`);
+  console.log(`Admin user created/verified: ${adminUsername}`);
 
   // Seed villa
   const existingVilla = await prisma.villa.findFirst();
 
   if (!existingVilla) {
-    await prisma.villa.create({
+    const villa = await prisma.villa.create({
       data: {
-        name: "Villa Elara",
-        description:
+        nameEn: "Villa Elara",
+        descriptionEn:
           "A stunning luxury villa nestled in the heart of the Greek countryside, offering breathtaking views of the Aegean Sea. Villa Elara combines traditional architecture with modern amenities to create an unforgettable holiday experience.",
-        shortDescription:
+        shortDescriptionEn:
           "Luxury villa in Greece with stunning Aegean Sea views, private pool, and traditional charm.",
+        bedrooms: 4,
+        bathrooms: 3,
         maxGuests: 10,
         basePricePerNight: 250,
+        currency: "EUR",
         touristTaxPerNight: 15,
-        minNights: 2,
+        minNights: 1,
         checkInTime: "15:00",
         checkOutTime: "11:00",
         address: "Villa Elara, Greece",
-        amenities: [
+        amenitiesEn: [
           "pool",
           "wifi",
           "parking",
@@ -55,12 +58,48 @@ async function main() {
           "garden",
           "sea_view",
         ],
-        houseRules:
+        houseRulesEn:
           "No smoking indoors. No parties or events. Quiet hours from 23:00 to 08:00.",
       },
     });
 
     console.log("Villa Elara seeded");
+
+    // Seed contact info
+    await prisma.contactInfo.create({
+      data: {
+        villaId: villa.id,
+        ownerFullName: "Villa Owner",
+        ownerDisplayName: "Villa Elara",
+        email: "info@villaelara.com",
+        streetAddress: "Villa Elara",
+        city: "Greece",
+        postalCode: "00000",
+        country: "GR",
+      },
+    });
+
+    console.log("Contact info seeded");
+
+    // Seed legal pages
+    await prisma.sitePage.createMany({
+      data: [
+        {
+          villaId: villa.id,
+          slug: "privacy-policy",
+          titleEn: "Privacy Policy",
+          contentEn: "Privacy policy content will be added here.",
+        },
+        {
+          villaId: villa.id,
+          slug: "terms-and-conditions",
+          titleEn: "Terms and Conditions",
+          contentEn: "Terms and conditions content will be added here.",
+        },
+      ],
+    });
+
+    console.log("Site pages seeded");
   } else {
     console.log("Villa already exists, skipping seed");
   }

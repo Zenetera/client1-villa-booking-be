@@ -3,8 +3,8 @@ import jwt, { SignOptions } from "jsonwebtoken";
 import prisma from "../config/database";
 import { env } from "../config/env";
 
-export async function login(email: string, password: string) {
-  const admin = await prisma.admin.findUnique({ where: { email } });
+export async function login(username: string, password: string) {
+  const admin = await prisma.admin.findUnique({ where: { username } });
   if (!admin) return null;
 
   const valid = await bcrypt.compare(password, admin.password);

@@ -10,7 +10,7 @@ datasource db {
 
 model Admin {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
+  username  String   @unique
   password  String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -20,30 +20,61 @@ model Admin {
 
 model Villa {
   id                  Int      @id @default(autoincrement())
-  name                String
-  description         String
-  shortDescription    String   @map("short_description")
+  nameEn              String   @map("name_en")
+  nameEl              String?  @map("name_el")
+  descriptionEn       String   @map("description_en")
+  descriptionEl       String?  @map("description_el")
+  shortDescriptionEn  String   @map("short_description_en")
+  shortDescriptionEl  String?  @map("short_description_el")
+  bedrooms            Int
+  bathrooms           Int
   maxGuests           Int      @default(10) @map("max_guests")
   basePricePerNight   Decimal  @map("base_price_per_night") @db.Decimal(10, 2)
+  currency            String   @default("EUR")
   touristTaxPerNight  Decimal  @default(15) @map("tourist_tax_per_night") @db.Decimal(10, 2)
-  minNights           Int      @default(2) @map("min_nights")
+  minNights           Int      @default(1) @map("min_nights")
   maxNights           Int?     @map("max_nights")
   checkInTime         String   @default("15:00") @map("check_in_time")
   checkOutTime        String   @default("11:00") @map("check_out_time")
   address             String
   latitude            Decimal? @db.Decimal(10, 7)
   longitude           Decimal? @db.Decimal(10, 7)
-  amenities           Json     @default("[]")
-  houseRules          String?  @map("house_rules")
+  amenitiesEn         Json     @default("[]") @map("amenities_en")
+  amenitiesEl         Json?    @map("amenities_el")
+  houseRulesEn        String?  @map("house_rules_en")
+  houseRulesEl        String?  @map("house_rules_el")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
+  contactInfo  ContactInfo?
   images       VillaImage[]
   bookings     Booking[]
   blockedDates BlockedDate[]
   pricingRules PricingRule[]
+  sitePages    SitePage[]
 
   @@map("villas")
+}
+
+model ContactInfo {
+  id               Int      @id @default(autoincrement())
+  villaId          Int      @unique @map("villa_id")
+  ownerFullName    String   @map("owner_full_name")
+  ownerDisplayName String   @map("owner_display_name")
+  email            String
+  phone            String?
+  whatsapp         String?
+  streetAddress    String   @map("street_address")
+  city             String
+  region           String?
+  postalCode       String   @map("postal_code")
+  country          String
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  villa Villa @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@map("contact_info")
 }
 
 model VillaImage {
@@ -74,6 +105,8 @@ model Booking {
   nightlyRate        Decimal   @map("nightly_rate") @db.Decimal(10, 2)
   touristTaxTotal    Decimal   @map("tourist_tax_total") @db.Decimal(10, 2)
   totalPrice         Decimal   @map("total_price") @db.Decimal(10, 2)
+  depositAmount      Decimal?  @map("deposit_amount") @db.Decimal(10, 2)
+  paymentStatus      String    @default("unpaid") @map("payment_status")
   status             String    @default("pending")
   adminNotes         String?   @map("admin_notes")
   guestMessage       String?   @map("guest_message")
@@ -118,4 +151,20 @@ model PricingRule {
   villa Villa @relation(fields: [villaId], references: [id], onDelete: Cascade)
 
   @@map("pricing_rules")
+}
+
+model SitePage {
+  id           Int      @id @default(autoincrement())
+  villaId      Int      @map("villa_id")
+  slug         String   @unique
+  titleEn      String   @map("title_en")
+  titleEl      String?  @map("title_el")
+  contentEn    String   @map("content_en")
+  contentEl    String?  @map("content_el")
+  lastModified DateTime @updatedAt @map("last_modified")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  villa Villa @relation(fields: [villaId], references: [id], onDelete: Cascade)
+
+  @@map("site_pages")
 }

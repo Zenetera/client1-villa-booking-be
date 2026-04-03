@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import routes from "./routes";
+import openApiDocument from "./docs/openapi";
 
 const app = express();
 
@@ -23,6 +25,12 @@ app.use(express.json());
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+// API docs
+app.get("/docs.json", (_req, res) => {
+  res.json(openApiDocument);
+});
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 // Routes
 app.use("/api", routes);
