@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../config/database";
 import type {
   CreatePricingRuleInput,
@@ -27,7 +28,7 @@ export async function createPricingRule(
       name: input.name,
       startDate: new Date(input.startDate),
       endDate: new Date(input.endDate),
-      pricePerNight: input.pricePerNight,
+      pricePerNight: new Prisma.Decimal(input.pricePerNight),
       minNights: input.minNights ?? null,
       priority: input.priority,
     },
@@ -51,7 +52,7 @@ export async function updatePricingRule(
       }),
       ...(input.endDate !== undefined && { endDate: new Date(input.endDate) }),
       ...(input.pricePerNight !== undefined && {
-        pricePerNight: input.pricePerNight,
+        pricePerNight: new Prisma.Decimal(input.pricePerNight),
       }),
       ...(input.minNights !== undefined && { minNights: input.minNights }),
       ...(input.priority !== undefined && { priority: input.priority }),

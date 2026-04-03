@@ -43,7 +43,7 @@ export async function listPages(req: AuthRequest, res: Response) {
 
 export async function getPage(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid page ID", "id"));
     return;
   }
@@ -86,7 +86,7 @@ export async function createPage(req: AuthRequest, res: Response) {
 
 export async function updatePage(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid page ID", "id"));
     return;
   }
@@ -117,7 +117,7 @@ export async function updatePage(req: AuthRequest, res: Response) {
 
 export async function deletePage(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid page ID", "id"));
     return;
   }

@@ -22,7 +22,6 @@ router.get("/stats", asyncHandler(bookingController.getStats));
 router.get("/bookings", asyncHandler(bookingController.listBookings));
 router.get("/bookings/export", asyncHandler(bookingController.exportBookings));
 router.get("/bookings/:id", asyncHandler(bookingController.getBooking));
-router.get("/bookings/reference/:referenceCode", asyncHandler(bookingController.getBookingByReference));
 router.patch("/bookings/:id/confirm", asyncHandler(bookingController.confirmBooking));
 router.patch("/bookings/:id/cancel", asyncHandler(bookingController.cancelBooking));
 router.patch("/bookings/:id/complete", asyncHandler(bookingController.completeBooking));

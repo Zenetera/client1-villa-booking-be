@@ -39,7 +39,7 @@ export async function createPricingRule(req: AuthRequest, res: Response) {
 
 export async function updatePricingRule(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid pricing rule ID", "id"));
     return;
   }
@@ -63,7 +63,7 @@ export async function updatePricingRule(req: AuthRequest, res: Response) {
 
 export async function deletePricingRule(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid pricing rule ID", "id"));
     return;
   }

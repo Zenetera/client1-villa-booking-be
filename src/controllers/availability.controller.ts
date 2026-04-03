@@ -10,8 +10,12 @@ export async function getAvailabilityCalendar(req: Request, res: Response) {
   const from = new Date(query.from);
   const to = new Date(query.to);
 
-  if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+  if (isNaN(from.getTime())) {
     res.status(400).json(errorResponse("Invalid date value", "from"));
+    return;
+  }
+  if (isNaN(to.getTime())) {
+    res.status(400).json(errorResponse("Invalid date value", "to"));
     return;
   }
 
@@ -40,8 +44,12 @@ export async function getPricingQuote(req: Request, res: Response) {
   const checkInDate = new Date(from);
   const checkOutDate = new Date(to);
 
-  if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+  if (isNaN(checkInDate.getTime())) {
     res.status(400).json(errorResponse("Invalid date value", "from"));
+    return;
+  }
+  if (isNaN(checkOutDate.getTime())) {
+    res.status(400).json(errorResponse("Invalid date value", "to"));
     return;
   }
 

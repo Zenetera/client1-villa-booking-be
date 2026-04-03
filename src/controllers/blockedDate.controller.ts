@@ -50,7 +50,7 @@ export async function createBlockedDates(req: AuthRequest, res: Response) {
 
 export async function deleteBlockedDate(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid blocked date ID", "id"));
     return;
   }

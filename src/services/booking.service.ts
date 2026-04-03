@@ -118,6 +118,13 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
+      const target = err.meta?.target as string[] | undefined;
+      if (target?.includes("reference_code")) {
+        throw new BookingError(
+          "Failed to generate booking reference, please try again",
+          "general"
+        );
+      }
       throw new BookingError(
         "Selected dates are no longer available",
         "checkIn"

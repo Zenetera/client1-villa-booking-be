@@ -40,7 +40,7 @@ export async function createImage(req: AuthRequest, res: Response) {
 
 export async function updateImage(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid image ID", "id"));
     return;
   }
@@ -77,7 +77,7 @@ export async function reorderImages(req: AuthRequest, res: Response) {
 
 export async function deleteImage(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid image ID", "id"));
     return;
   }
