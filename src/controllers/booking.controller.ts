@@ -83,7 +83,7 @@ export async function listBookings(req: AuthRequest, res: Response) {
 
 export async function getBooking(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid booking ID", "id"));
     return;
   }
@@ -99,7 +99,7 @@ export async function getBooking(req: AuthRequest, res: Response) {
 
 export async function confirmBooking(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid booking ID", "id"));
     return;
   }
@@ -120,7 +120,7 @@ export async function confirmBooking(req: AuthRequest, res: Response) {
 
 export async function cancelBooking(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid booking ID", "id"));
     return;
   }
@@ -144,7 +144,7 @@ export async function cancelBooking(req: AuthRequest, res: Response) {
 
 export async function completeBooking(req: AuthRequest, res: Response) {
   const id = Number(req.params.id);
-  if (isNaN(id)) {
+  if (!Number.isInteger(id) || id <= 0) {
     res.status(400).json(errorResponse("Invalid booking ID", "id"));
     return;
   }
@@ -207,7 +207,7 @@ export async function exportBookings(req: AuthRequest, res: Response) {
       b.referenceCode,
       b.status,
       csvEscape(b.guestName),
-      b.guestEmail,
+      csvEscape(b.guestEmail),
       csvEscape(b.guestPhone),
       b.checkIn.toISOString().split("T")[0],
       b.checkOut.toISOString().split("T")[0],

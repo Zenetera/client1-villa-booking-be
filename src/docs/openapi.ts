@@ -6,12 +6,7 @@ const openApiDocument = {
     description:
       "API documentation for the Villa Elara backend with endpoint-specific request and response schemas.",
   },
-  servers: [
-    {
-      url: "http://localhost:8000",
-      description: "Local development",
-    },
-  ],
+  servers: [],
   tags: [
     { name: "System" },
     { name: "Auth" },

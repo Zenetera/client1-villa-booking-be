@@ -11,6 +11,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function escapeHtml(str: string | number): string {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 interface BookingEmailData {
   referenceCode: string;
   guestName: string;
@@ -32,7 +40,7 @@ export async function sendBookingReceived(data: BookingEmailData) {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Booking Request Received</h2>
-        <p>Dear ${data.guestName},</p>
+        <p>Dear ${escapeHtml(data.guestName)},</p>
         <p>Thank you for your booking request. We have received it and will review it shortly.</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -61,7 +69,7 @@ export async function sendBookingConfirmed(data: BookingEmailData) {
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Booking Confirmed</h2>
-        <p>Dear ${data.guestName},</p>
+        <p>Dear ${escapeHtml(data.guestName)},</p>
         <p>Great news! Your booking has been confirmed.</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -93,10 +101,10 @@ export async function sendBookingCancelled(
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Booking Cancelled</h2>
-        <p>Dear ${data.guestName},</p>
-        <p>We regret to inform you that your booking <strong>${data.referenceCode}</strong> for ${data.checkIn} — ${data.checkOut} has been cancelled.</p>
+        <p>Dear ${escapeHtml(data.guestName)},</p>
+        <p>We regret to inform you that your booking <strong>${escapeHtml(data.referenceCode)}</strong> for ${escapeHtml(data.checkIn)} — ${escapeHtml(data.checkOut)} has been cancelled.</p>
 
-        <p><strong>Reason:</strong> ${reason}</p>
+        <p><strong>Reason:</strong> ${escapeHtml(reason)}</p>
 
         <p>If you have any questions, please don't hesitate to contact us.</p>
         <p>Best regards,<br/>Villa Elara</p>
