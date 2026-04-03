@@ -39,7 +39,7 @@ export async function getCalendar(
 ): Promise<CalendarDay[]> {
   const villa = await prisma.villa.findUniqueOrThrow({
     where: { id: villaId },
-    select: { basePricePerNight: true, minNights: true },
+    select: { basePricePerNight: true },
   });
 
   const [blockedDates, pricingRules] = await Promise.all([
@@ -70,8 +70,6 @@ export async function getCalendar(
 
     const matchingRule = pricingRules.find((rule) => {
       if (current < rule.startDate || current > rule.endDate) return false;
-      if (rule.minNights !== null && villa.minNights < rule.minNights)
-        return false;
       return true;
     });
 

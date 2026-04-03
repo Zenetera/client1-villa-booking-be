@@ -10,6 +10,11 @@ export async function getAvailabilityCalendar(req: Request, res: Response) {
   const from = new Date(query.from);
   const to = new Date(query.to);
 
+  if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+    res.status(400).json(errorResponse("Invalid date value", "from"));
+    return;
+  }
+
   const villa = await prisma.villa.findFirst({
     select: { id: true, minNights: true, maxNights: true },
   });
@@ -34,6 +39,11 @@ export async function getPricingQuote(req: Request, res: Response) {
   const { from, to } = calendarQuerySchema.parse(req.query);
   const checkInDate = new Date(from);
   const checkOutDate = new Date(to);
+
+  if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+    res.status(400).json(errorResponse("Invalid date value", "from"));
+    return;
+  }
 
   if (checkOutDate <= checkInDate) {
     res.status(400).json(errorResponse("Check-out must be after check-in", "checkOut"));

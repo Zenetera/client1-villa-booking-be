@@ -22,9 +22,9 @@ ADD COLUMN "short_description_en" TEXT;
 -- Backfill localized and required fields from existing legacy columns
 UPDATE "villas"
 SET
-  "name_en" = COALESCE("name_en", "name"),
-  "description_en" = COALESCE("description_en", "description"),
-  "short_description_en" = COALESCE("short_description_en", "short_description"),
+  "name_en" = COALESCE("name_en", "name", 'Unnamed Villa'),
+  "description_en" = COALESCE("description_en", "description", ''),
+  "short_description_en" = COALESCE("short_description_en", "short_description", ''),
   "amenities_en" = COALESCE("amenities_en", "amenities", '[]'::jsonb),
   "house_rules_en" = COALESCE("house_rules_en", "house_rules"),
   "bedrooms" = COALESCE("bedrooms", 1),

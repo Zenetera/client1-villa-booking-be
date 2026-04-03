@@ -207,7 +207,7 @@ export async function exportBookings(req: AuthRequest, res: Response) {
       b.referenceCode,
       b.status,
       csvEscape(b.guestName),
-      b.guestEmail,
+      csvEscape(b.guestEmail),
       csvEscape(b.guestPhone),
       b.checkIn.toISOString().split("T")[0],
       b.checkOut.toISOString().split("T")[0],

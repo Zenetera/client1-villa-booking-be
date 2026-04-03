@@ -2,8 +2,8 @@ import prisma from "../config/database";
 
 export async function generateReferenceCode(): Promise<string> {
   const now = new Date();
-  const yy = String(now.getFullYear()).slice(2);
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yy = String(now.getUTCFullYear()).slice(2);
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
   const prefix = `VE${yy}${mm}`;
 
   const latest = await prisma.booking.findFirst({

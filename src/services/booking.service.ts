@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../config/database";
 import { generateReferenceCode } from "../utils/referenceCode";
 import { calculatePricing } from "./pricing.service";
@@ -46,7 +47,7 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
     );
   }
 
-  // Check availability
+  // Check availability (optimistic, enforced again inside transaction)
   const { available, conflictingDates } = await checkAvailability(
     villaId,
     checkIn,
@@ -78,36 +79,52 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
   }
 
   // Create booking + blocked dates in a transaction
-  const booking = await prisma.$transaction(async (tx) => {
-    const newBooking = await tx.booking.create({
-      data: {
-        villaId,
-        referenceCode,
-        guestName: input.guestName,
-        guestEmail: input.guestEmail,
-        guestPhone: input.guestPhone,
-        checkIn,
-        checkOut,
-        numGuests: input.numGuests,
-        numNights,
-        nightlyRate: pricing.nightlyRate,
-        touristTaxTotal: pricing.touristTaxTotal,
-        totalPrice: pricing.totalPrice,
-        status: "pending",
-        guestMessage: input.guestMessage || null,
-      },
-    });
+  // The unique constraint on blocked_dates(villa_id, date) enforces availability at the DB level
+  let booking;
+  try {
+    booking = await prisma.$transaction(async (tx) => {
+      const newBooking = await tx.booking.create({
+        data: {
+          villaId,
+          referenceCode,
+          guestName: input.guestName,
+          guestEmail: input.guestEmail,
+          guestPhone: input.guestPhone,
+          checkIn,
+          checkOut,
+          numGuests: input.numGuests,
+          numNights,
+          nightlyRate: pricing.nightlyRate,
+          touristTaxTotal: pricing.touristTaxTotal,
+          totalPrice: pricing.totalPrice,
+          status: "pending",
+          guestMessage: input.guestMessage || null,
+        },
+      });
 
-    // Create blocked dates linked to this booking
-    await tx.blockedDate.createMany({
-      data: blockedDatesData.map((bd) => ({
-        ...bd,
-        bookingId: newBooking.id,
-      })),
-    });
+      // Create blocked dates linked to this booking
+      // Unique constraint violation here means a concurrent booking claimed the dates
+      await tx.blockedDate.createMany({
+        data: blockedDatesData.map((bd) => ({
+          ...bd,
+          bookingId: newBooking.id,
+        })),
+      });
 
-    return newBooking;
-  });
+      return newBooking;
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      throw new BookingError(
+        "Selected dates are no longer available",
+        "checkIn"
+      );
+    }
+    throw err;
+  }
 
   // Send confirmation email (don't block on failure)
   emailService
@@ -139,12 +156,17 @@ export async function confirmBooking(id: number, adminNotes?: string) {
   }
 
   const updated = await prisma.booking.update({
-    where: { id },
+    where: { id, status: "pending" },
     data: {
       status: "confirmed",
       confirmedAt: new Date(),
       adminNotes: adminNotes ?? booking.adminNotes,
     },
+  }).catch((err) => {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+      throw new BookingError("Booking status has changed, please refresh", "status");
+    }
+    throw err;
   });
 
   emailService
@@ -175,23 +197,31 @@ export async function cancelBooking(id: number, cancellationReason: string) {
     );
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
-    const cancelled = await tx.booking.update({
-      where: { id },
-      data: {
-        status: "cancelled",
-        cancelledAt: new Date(),
-        cancellationReason,
-      },
-    });
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      const cancelled = await tx.booking.update({
+        where: { id, status: booking.status },
+        data: {
+          status: "cancelled",
+          cancelledAt: new Date(),
+          cancellationReason,
+        },
+      });
 
-    // Remove blocked dates for this booking
-    await tx.blockedDate.deleteMany({
-      where: { bookingId: id },
-    });
+      // Remove blocked dates for this booking
+      await tx.blockedDate.deleteMany({
+        where: { bookingId: id },
+      });
 
-    return cancelled;
-  });
+      return cancelled;
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+      throw new BookingError("Booking status has changed, please refresh", "status");
+    }
+    throw err;
+  }
 
   emailService
     .sendBookingCancelled(
@@ -220,8 +250,13 @@ export async function completeBooking(id: number) {
   }
 
   return prisma.booking.update({
-    where: { id },
+    where: { id, status: "confirmed" },
     data: { status: "completed" },
+  }).catch((err) => {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+      throw new BookingError("Booking status has changed, please refresh", "status");
+    }
+    throw err;
   });
 }
 
