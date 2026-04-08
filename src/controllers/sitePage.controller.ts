@@ -7,7 +7,6 @@ import {
   updateSitePageSchema,
 } from "../validators/sitePage.validator";
 import { successResponse, errorResponse } from "../utils/apiResponse";
-import { getLang, projectLang } from "../utils/lang";
 import prisma from "../config/database";
 
 async function getVillaId(): Promise<number | null> {
@@ -26,8 +25,7 @@ export async function getPageBySlug(req: Request, res: Response) {
     return;
   }
 
-  const lang = getLang(req);
-  res.json(successResponse(projectLang(page as unknown as Record<string, unknown>, lang)));
+  res.json(successResponse(page));
 }
 
 // Admin

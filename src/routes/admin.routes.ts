@@ -23,11 +23,9 @@ router.get("/stats", asyncHandler(bookingController.getStats));
 router.get("/bookings", asyncHandler(bookingController.listBookings));
 router.get("/bookings/export", asyncHandler(bookingController.exportBookings));
 router.get("/bookings/:id", asyncHandler(bookingController.getBooking));
-router.patch("/bookings/:id", asyncHandler(bookingController.updateBooking));
 router.patch("/bookings/:id/confirm", asyncHandler(bookingController.confirmBooking));
 router.patch("/bookings/:id/cancel", asyncHandler(bookingController.cancelBooking));
 router.patch("/bookings/:id/complete", asyncHandler(bookingController.completeBooking));
-router.patch("/bookings/:id/payment-status", asyncHandler(bookingController.updatePaymentStatus));
 
 // Blocked dates
 router.get("/blocked-dates", asyncHandler(blockedDateController.listBlockedDates));

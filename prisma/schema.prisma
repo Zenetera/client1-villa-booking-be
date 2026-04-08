@@ -22,7 +22,6 @@ model Villa {
   basePricePerNight   Decimal  @map("base_price_per_night") @db.Decimal(10, 2)
   currency            String   @default("EUR")
   touristTaxPerNight  Decimal  @default(15) @map("tourist_tax_per_night") @db.Decimal(10, 2)
-  depositPercentage   Decimal  @default(10) @map("deposit_percentage") @db.Decimal(5, 2)
   minNights           Int      @default(1) @map("min_nights")
   maxNights           Int?     @map("max_nights")
   checkInTime         String   @default("15:00") @map("check_in_time")

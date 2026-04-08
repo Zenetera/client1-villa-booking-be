@@ -22,7 +22,6 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
       minNights: true,
       maxNights: true,
       touristTaxPerNight: true,
-      depositPercentage: true,
     },
   });
 
@@ -84,11 +83,6 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
   let booking;
   try {
     booking = await prisma.$transaction(async (tx) => {
-      const depositAmount = villa.depositPercentage
-        .div(100)
-        .mul(pricing.totalPrice)
-        .toDecimalPlaces(2);
-
       const newBooking = await tx.booking.create({
         data: {
           villaId,
@@ -103,15 +97,12 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
           nightlyRate: pricing.nightlyRate,
           touristTaxTotal: pricing.touristTaxTotal,
           totalPrice: pricing.totalPrice,
-          depositAmount,
           status: "pending",
           guestMessage: input.guestMessage || null,
         },
       });
 
-      // Create blocked dates linked to this booking at creation time (status: pending),
-      // NOT at confirmation. Blocking at creation prevents race conditions where two
-      // guests submit overlapping requests before either is confirmed.
+      // Create blocked dates linked to this booking
       // Unique constraint violation here means a concurrent booking claimed the dates
       await tx.blockedDate.createMany({
         data: blockedDatesData.map((bd) => ({
@@ -225,8 +216,7 @@ export async function cancelBooking(id: number, cancellationReason: string) {
         },
       });
 
-      // Remove blocked dates by bookingId (not by date-range matching).
-      // The bookingId FK makes this safe even if dates overlap with a manually blocked range.
+      // Remove blocked dates for this booking
       await tx.blockedDate.deleteMany({
         where: { bookingId: id },
       });
@@ -293,32 +283,10 @@ export async function getBookingById(id: number) {
 
 export async function listBookings(opts: {
   status?: string;
-  search?: string;
-  from?: string;
-  to?: string;
   page: number;
   limit: number;
 }) {
-  const where: Prisma.BookingWhereInput = {
-    ...(opts.status ? { status: opts.status } : {}),
-    ...(opts.search
-      ? {
-          OR: [
-            { guestName: { contains: opts.search, mode: "insensitive" as const } },
-            { guestEmail: { contains: opts.search, mode: "insensitive" as const } },
-            { referenceCode: { contains: opts.search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
-    ...(opts.from || opts.to
-      ? {
-          checkIn: {
-            ...(opts.from ? { gte: new Date(opts.from) } : {}),
-            ...(opts.to ? { lte: new Date(opts.to) } : {}),
-          },
-        }
-      : {}),
-  };
+  const where = opts.status ? { status: opts.status } : {};
   const skip = (opts.page - 1) * opts.limit;
 
   const [bookings, total] = await Promise.all([
@@ -341,24 +309,6 @@ export async function listBookings(opts: {
       totalPages: Math.ceil(total / opts.limit),
     },
   };
-}
-
-export async function updatePaymentStatus(id: number, paymentStatus: string) {
-  await prisma.booking.findUniqueOrThrow({ where: { id } });
-
-  return prisma.booking.update({
-    where: { id },
-    data: { paymentStatus },
-  });
-}
-
-export async function updateBooking(id: number, data: { adminNotes?: string | null; paymentStatus?: string }) {
-  await prisma.booking.findUniqueOrThrow({ where: { id } });
-
-  return prisma.booking.update({
-    where: { id },
-    data,
-  });
 }
 
 export async function exportBookings(opts: {
