@@ -2,7 +2,7 @@ const openApiDocument = {
   openapi: "3.0.3",
   info: {
     title: "Synset V Booking API",
-    version: "1.1.0",
+    version: "1.2.0",
     description:
       "API documentation for the Villa Elara backend with endpoint-specific request and response schemas.",
   },
@@ -497,7 +497,7 @@ const openApiDocument = {
                 properties: {
                   bookedNightsThisMonth: { type: "integer" },
                   daysInThisMonth: { type: "integer" },
-                  rate: { type: "number", example: 66.7, description: "Occupancy rate as a percentage (0–100)" },
+                  rate: { type: "number", example: 66.7, description: "Occupancy rate as a percentage (0\u2013100)" },
                 },
                 required: ["bookedNightsThisMonth", "daysInThisMonth", "rate"],
               },
@@ -516,9 +516,205 @@ const openApiDocument = {
         },
         required: ["data"],
       },
+      // --- Blocked Dates ---
+      BlockedDate: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          villaId: { type: "integer" },
+          date: { type: "string", format: "date-time" },
+          reason: { type: "string" },
+          bookingId: { type: "integer", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+        },
+        required: ["id", "villaId", "date", "reason", "createdAt"],
+      },
+      CreateBlockedDateRequest: {
+        type: "object",
+        properties: {
+          startDate: { type: "string", format: "date", description: "YYYY-MM-DD" },
+          endDate: { type: "string", format: "date", description: "YYYY-MM-DD" },
+          reason: { type: "string" },
+        },
+        required: ["startDate", "endDate", "reason"],
+      },
+      // --- Pricing Rules ---
+      PricingRule: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          villaId: { type: "integer" },
+          name: { type: "string" },
+          startDate: { type: "string", format: "date-time" },
+          endDate: { type: "string", format: "date-time" },
+          pricePerNight: { type: "string", example: "300.00" },
+          minNights: { type: "integer", nullable: true },
+          priority: { type: "integer" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+        required: ["id", "villaId", "name", "startDate", "endDate", "pricePerNight", "priority", "createdAt"],
+      },
+      CreatePricingRuleRequest: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          startDate: { type: "string", format: "date", description: "YYYY-MM-DD" },
+          endDate: { type: "string", format: "date", description: "YYYY-MM-DD" },
+          pricePerNight: { type: "number", example: 300 },
+          minNights: { type: "integer", nullable: true },
+          priority: { type: "integer", default: 0 },
+        },
+        required: ["name", "startDate", "endDate", "pricePerNight"],
+      },
+      UpdatePricingRuleRequest: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          startDate: { type: "string", format: "date" },
+          endDate: { type: "string", format: "date" },
+          pricePerNight: { type: "number" },
+          minNights: { type: "integer", nullable: true },
+          priority: { type: "integer" },
+        },
+      },
+      // --- Contact Info ---
+      ContactInfo: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          villaId: { type: "integer" },
+          ownerFullName: { type: "string" },
+          ownerDisplayName: { type: "string" },
+          email: { type: "string", format: "email" },
+          phone: { type: "string", nullable: true },
+          whatsapp: { type: "string", nullable: true },
+          streetAddress: { type: "string" },
+          city: { type: "string" },
+          region: { type: "string", nullable: true },
+          postalCode: { type: "string" },
+          country: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+        required: [
+          "id",
+          "villaId",
+          "ownerFullName",
+          "ownerDisplayName",
+          "email",
+          "streetAddress",
+          "city",
+          "postalCode",
+          "country",
+          "createdAt",
+          "updatedAt",
+        ],
+      },
+      UpdateContactRequest: {
+        type: "object",
+        properties: {
+          ownerFullName: { type: "string" },
+          ownerDisplayName: { type: "string" },
+          email: { type: "string", format: "email" },
+          phone: { type: "string", nullable: true },
+          whatsapp: { type: "string", nullable: true },
+          streetAddress: { type: "string" },
+          city: { type: "string" },
+          region: { type: "string", nullable: true },
+          postalCode: { type: "string" },
+          country: { type: "string" },
+        },
+        required: [
+          "ownerFullName",
+          "ownerDisplayName",
+          "email",
+          "streetAddress",
+          "city",
+          "postalCode",
+          "country",
+        ],
+      },
+      // --- Villa Images (admin) ---
+      CreateImageRequest: {
+        type: "object",
+        properties: {
+          imageUrl: { type: "string", format: "uri" },
+          altText: { type: "string" },
+        },
+        required: ["imageUrl", "altText"],
+      },
+      UpdateImageRequest: {
+        type: "object",
+        properties: {
+          altText: { type: "string" },
+          displayOrder: { type: "integer", minimum: 0 },
+          isHero: { type: "boolean" },
+        },
+      },
+      ReorderImagesRequest: {
+        type: "object",
+        properties: {
+          imageIds: {
+            type: "array",
+            items: { type: "integer" },
+            minItems: 1,
+          },
+        },
+        required: ["imageIds"],
+      },
+      // --- Site Pages ---
+      SitePage: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          villaId: { type: "integer" },
+          slug: { type: "string" },
+          titleEn: { type: "string" },
+          titleEl: { type: "string", nullable: true },
+          contentEn: { type: "string" },
+          contentEl: { type: "string", nullable: true },
+          lastModified: { type: "string", format: "date-time" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+        required: ["id", "villaId", "slug", "titleEn", "contentEn", "lastModified", "createdAt"],
+      },
+      SitePageSummary: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          slug: { type: "string" },
+          titleEn: { type: "string" },
+          titleEl: { type: "string", nullable: true },
+          lastModified: { type: "string", format: "date-time" },
+          createdAt: { type: "string", format: "date-time" },
+        },
+        required: ["id", "slug", "titleEn", "lastModified", "createdAt"],
+      },
+      CreateSitePageRequest: {
+        type: "object",
+        properties: {
+          slug: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          titleEn: { type: "string" },
+          titleEl: { type: "string", nullable: true },
+          contentEn: { type: "string" },
+          contentEl: { type: "string", nullable: true },
+        },
+        required: ["slug", "titleEn", "contentEn"],
+      },
+      UpdateSitePageRequest: {
+        type: "object",
+        properties: {
+          slug: { type: "string", pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          titleEn: { type: "string" },
+          titleEl: { type: "string", nullable: true },
+          contentEn: { type: "string" },
+          contentEl: { type: "string", nullable: true },
+        },
+      },
     },
   },
   paths: {
+    // ===== System =====
     "/health": {
       get: {
         tags: ["System"],
@@ -535,6 +731,7 @@ const openApiDocument = {
         },
       },
     },
+    // ===== Auth =====
     "/api/auth/login": {
       post: {
         tags: ["Auth"],
@@ -575,6 +772,7 @@ const openApiDocument = {
         },
       },
     },
+    // ===== Public =====
     "/api/villa": {
       get: {
         tags: ["Public"],
@@ -590,6 +788,36 @@ const openApiDocument = {
           },
           "404": {
             description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/villa/contact": {
+      get: {
+        tags: ["Public"],
+        summary: "Get public contact info",
+        responses: {
+          "200": {
+            description: "Contact info",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/ContactInfo" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Contact info not found",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -769,6 +997,46 @@ const openApiDocument = {
         },
       },
     },
+    "/api/pages/{slug}": {
+      get: {
+        tags: ["Public"],
+        summary: "Get site page by slug",
+        parameters: [
+          {
+            in: "path",
+            name: "slug",
+            required: true,
+            schema: { type: "string" },
+            description: "Page slug (e.g. privacy-policy, terms-of-service)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Page content",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SitePage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Page not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ===== Admin — Villa =====
     "/api/admin/villa": {
       put: {
         tags: ["Admin"],
@@ -818,6 +1086,7 @@ const openApiDocument = {
         },
       },
     },
+    // ===== Admin — Bookings =====
     "/api/admin/bookings": {
       get: {
         tags: ["Admin"],
@@ -860,6 +1129,56 @@ const openApiDocument = {
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/bookings/export": {
+      get: {
+        tags: ["Admin"],
+        summary: "Export bookings as CSV",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "query",
+            name: "status",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["pending", "confirmed", "completed", "cancelled"],
+            },
+          },
+          {
+            in: "query",
+            name: "from",
+            required: false,
+            schema: { type: "string", format: "date" },
+            description: "Filter by check-in from date (YYYY-MM-DD)",
+          },
+          {
+            in: "query",
+            name: "to",
+            required: false,
+            schema: { type: "string", format: "date" },
+            description: "Filter by check-in to date (YYYY-MM-DD)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "CSV file download",
+            content: {
+              "text/csv": {
+                schema: { type: "string" },
               },
             },
           },
@@ -1093,47 +1412,1080 @@ const openApiDocument = {
         },
       },
     },
-    "/api/admin/bookings/export": {
+    // ===== Admin — Blocked Dates =====
+    "/api/admin/blocked-dates": {
       get: {
         tags: ["Admin"],
-        summary: "Export bookings as CSV",
+        summary: "List manually blocked dates",
         security: [{ bearerAuth: [] }],
         parameters: [
-          {
-            in: "query",
-            name: "status",
-            required: false,
-            schema: {
-              type: "string",
-              enum: ["pending", "confirmed", "completed", "cancelled"],
-            },
-          },
           {
             in: "query",
             name: "from",
             required: false,
             schema: { type: "string", format: "date" },
-            description: "Filter by check-in from date (YYYY-MM-DD)",
+            description: "Filter from date (YYYY-MM-DD)",
           },
           {
             in: "query",
             name: "to",
             required: false,
             schema: { type: "string", format: "date" },
-            description: "Filter by check-in to date (YYYY-MM-DD)",
+            description: "Filter to date (YYYY-MM-DD)",
           },
         ],
         responses: {
           "200": {
-            description: "CSV file download",
+            description: "List of blocked dates",
             content: {
-              "text/csv": {
-                schema: { type: "string" },
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/BlockedDate" },
+                    },
+                  },
+                  required: ["data"],
+                },
               },
             },
           },
           "401": {
             description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ["Admin"],
+        summary: "Block a date range",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateBlockedDateRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Dates blocked",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "object",
+                      properties: {
+                        created: { type: "integer", description: "Number of new blocked dates inserted" },
+                        total: { type: "integer", description: "Total days in the requested range" },
+                      },
+                      required: ["created", "total"],
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or dates already blocked",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/blocked-dates/range": {
+      delete: {
+        tags: ["Admin"],
+        summary: "Delete blocked dates in a range",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "query",
+            name: "from",
+            required: true,
+            schema: { type: "string", format: "date" },
+            description: "Range start (YYYY-MM-DD)",
+          },
+          {
+            in: "query",
+            name: "to",
+            required: true,
+            schema: { type: "string", format: "date" },
+            description: "Range end (YYYY-MM-DD)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Blocked dates deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "object",
+                      properties: {
+                        deleted: { type: "integer" },
+                      },
+                      required: ["deleted"],
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Missing from/to parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/blocked-dates/{id}": {
+      delete: {
+        tags: ["Admin"],
+        summary: "Delete a single blocked date",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Blocked date deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/BlockedDate" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid ID or date belongs to a booking",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Blocked date or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ===== Admin — Pricing Rules =====
+    "/api/admin/pricing-rules": {
+      get: {
+        tags: ["Admin"],
+        summary: "List pricing rules",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of pricing rules",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/PricingRule" },
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ["Admin"],
+        summary: "Create pricing rule",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreatePricingRuleRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Pricing rule created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/PricingRule" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/pricing-rules/{id}": {
+      put: {
+        tags: ["Admin"],
+        summary: "Update pricing rule",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdatePricingRuleRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Pricing rule updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/PricingRule" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or invalid ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Pricing rule or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Admin"],
+        summary: "Delete pricing rule",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Pricing rule deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/PricingRule" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Pricing rule or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ===== Admin — Contact Info =====
+    "/api/admin/contact": {
+      get: {
+        tags: ["Admin"],
+        summary: "Get contact info",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Contact info",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/ContactInfo" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Contact info not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ["Admin"],
+        summary: "Update contact info",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateContactRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Contact info updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/ContactInfo" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ===== Admin — Villa Images =====
+    "/api/admin/images": {
+      get: {
+        tags: ["Admin"],
+        summary: "List villa images",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of images ordered by display order",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/VillaImage" },
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ["Admin"],
+        summary: "Add villa image",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateImageRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Image created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VillaImage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/images/reorder": {
+      put: {
+        tags: ["Admin"],
+        summary: "Reorder villa images",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ReorderImagesRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Images reordered",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/VillaImage" },
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/images/{id}": {
+      put: {
+        tags: ["Admin"],
+        summary: "Update image metadata",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateImageRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Image updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VillaImage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or invalid ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Image or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Admin"],
+        summary: "Delete villa image",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Image deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VillaImage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Image or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    // ===== Admin — Site Pages =====
+    "/api/admin/pages": {
+      get: {
+        tags: ["Admin"],
+        summary: "List site pages",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of pages (without content body)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/SitePageSummary" },
+                    },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ["Admin"],
+        summary: "Create site page",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateSitePageRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Page created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SitePage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or duplicate slug",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/admin/pages/{id}": {
+      get: {
+        tags: ["Admin"],
+        summary: "Get site page by ID",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Page details",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SitePage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid page ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Page or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ["Admin"],
+        summary: "Update site page",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateSitePageRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Page updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SitePage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error, duplicate slug, or invalid ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Page or villa not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Admin"],
+        summary: "Delete site page",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Page deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/SitePage" },
+                  },
+                  required: ["data"],
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid page ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Page or villa not found",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
