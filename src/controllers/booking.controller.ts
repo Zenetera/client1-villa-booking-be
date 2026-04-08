@@ -9,6 +9,8 @@ import {
   cancelBookingSchema,
   bookingListQuerySchema,
   exportBookingsQuerySchema,
+  updatePaymentStatusSchema,
+  updateBookingSchema,
 } from "../validators/booking.validator";
 import { successResponse, errorResponse } from "../utils/apiResponse";
 import prisma from "../config/database";
@@ -74,6 +76,9 @@ export async function listBookings(req: AuthRequest, res: Response) {
 
   const result = await bookingService.listBookings({
     status: query.status,
+    search: query.search,
+    from: query.from,
+    to: query.to,
     page: query.page,
     limit: query.limit,
   });
@@ -151,6 +156,48 @@ export async function completeBooking(req: AuthRequest, res: Response) {
 
   try {
     const booking = await bookingService.completeBooking(id);
+    res.json(successResponse(booking));
+  } catch (err) {
+    if (err instanceof BookingError) {
+      res.status(400).json(errorResponse(err.message, err.field));
+      return;
+    }
+    throw err;
+  }
+}
+
+export async function updatePaymentStatus(req: AuthRequest, res: Response) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json(errorResponse("Invalid booking ID", "id"));
+    return;
+  }
+
+  const body = updatePaymentStatusSchema.parse(req.body);
+
+  try {
+    const booking = await bookingService.updatePaymentStatus(id, body.paymentStatus);
+    res.json(successResponse(booking));
+  } catch (err) {
+    if (err instanceof BookingError) {
+      res.status(400).json(errorResponse(err.message, err.field));
+      return;
+    }
+    throw err;
+  }
+}
+
+export async function updateBooking(req: AuthRequest, res: Response) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json(errorResponse("Invalid booking ID", "id"));
+    return;
+  }
+
+  const body = updateBookingSchema.parse(req.body);
+
+  try {
+    const booking = await bookingService.updateBooking(id, body);
     res.json(successResponse(booking));
   } catch (err) {
     if (err instanceof BookingError) {
