@@ -49,6 +49,9 @@ export const calendarQuerySchema = z.object({
 
 export const bookingListQuerySchema = z.object({
   status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+  search: z.string().optional(),
+  from: dateString.optional(),
+  to: dateString.optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
@@ -58,3 +61,18 @@ export const exportBookingsQuerySchema = z.object({
   from: dateString.optional(),
   to: dateString.optional(),
 });
+
+export const paymentStatusEnum = z.enum(["unpaid", "deposit_paid", "paid"]);
+
+export const updatePaymentStatusSchema = z.object({
+  paymentStatus: paymentStatusEnum,
+});
+
+export type UpdatePaymentStatusInput = z.infer<typeof updatePaymentStatusSchema>;
+
+export const updateBookingSchema = z.object({
+  adminNotes: z.string().nullable().optional(),
+  paymentStatus: paymentStatusEnum.optional(),
+}).strict();
+
+export type UpdateBookingInput = z.infer<typeof updateBookingSchema>;
