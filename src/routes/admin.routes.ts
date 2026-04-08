@@ -6,6 +6,7 @@ import * as blockedDateController from "../controllers/blockedDate.controller";
 import * as pricingRuleController from "../controllers/pricingRule.controller";
 import * as villaImageController from "../controllers/villaImage.controller";
 import * as sitePageController from "../controllers/sitePage.controller";
+import * as contactController from "../controllers/contact.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
@@ -37,6 +38,10 @@ router.get("/pricing-rules", asyncHandler(pricingRuleController.listPricingRules
 router.post("/pricing-rules", asyncHandler(pricingRuleController.createPricingRule));
 router.put("/pricing-rules/:id", asyncHandler(pricingRuleController.updatePricingRule));
 router.delete("/pricing-rules/:id", asyncHandler(pricingRuleController.deletePricingRule));
+
+// Contact info
+router.get("/contact", asyncHandler(contactController.getContactInfo));
+router.put("/contact", asyncHandler(contactController.updateContactInfo));
 
 // Villa images
 router.get("/images", asyncHandler(villaImageController.listImages));

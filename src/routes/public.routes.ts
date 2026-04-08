@@ -3,6 +3,7 @@ import * as villaController from "../controllers/villa.controller";
 import * as availabilityController from "../controllers/availability.controller";
 import * as bookingController from "../controllers/booking.controller";
 import * as sitePageController from "../controllers/sitePage.controller";
+import * as contactController from "../controllers/contact.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
@@ -16,6 +17,9 @@ router.get("/pricing", asyncHandler(availabilityController.getPricingQuote));
 
 // Bookings (public)
 router.post("/bookings", asyncHandler(bookingController.createBooking));
+
+// Contact info
+router.get("/villa/contact", asyncHandler(contactController.getContactInfo));
 
 // Site pages (legal pages, etc.)
 router.get("/pages/:slug", asyncHandler(sitePageController.getPageBySlug));
