@@ -11,7 +11,6 @@ export const updateVillaSchema = z.object({
   bathrooms: z.number().int().positive().optional(),
   maxGuests: z.number().int().positive().optional(),
   basePricePerNight: z.number().positive().optional(),
-  currency: z.string().min(1).optional(),
   touristTaxPerNight: z.number().nonnegative().optional(),
   minNights: z.number().int().positive().optional(),
   maxNights: z.number().int().positive().nullable().optional(),
