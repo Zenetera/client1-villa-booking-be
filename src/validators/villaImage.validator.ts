@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createImageSchema = z.object({
   imageUrl: z.string().url("Must be a valid URL"),
-  altText: z.string().min(1, "Alt text is required"),
+  altText: z.string(),
 });
 
 export type CreateImageInput = z.infer<typeof createImageSchema>;
