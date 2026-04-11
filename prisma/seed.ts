@@ -9,9 +9,9 @@ async function main() {
   if (!existingVilla) {
     const villa = await prisma.villa.create({
       data: {
-        nameEn: "Villa Elara",
+        nameEn: "Sunset Villa",
         descriptionEn:
-          "A stunning luxury villa nestled in the heart of the Greek countryside, offering breathtaking views of the Aegean Sea. Villa Elara combines traditional architecture with modern amenities to create an unforgettable holiday experience.",
+          "A stunning luxury villa nestled in the heart of the Greek countryside, offering breathtaking views of the Aegean Sea. Sunset Villa combines traditional architecture with modern amenities to create an unforgettable holiday experience.",
         shortDescriptionEn:
           "Luxury villa in Greece with stunning Aegean Sea views, private pool, and traditional charm.",
         bedrooms: 4,
@@ -23,7 +23,7 @@ async function main() {
         minNights: 1,
         checkInTime: "15:00",
         checkOutTime: "11:00",
-        address: "Villa Elara, Greece",
+        address: "Sunset Villa, Greece",
         amenitiesEn: [
           "pool",
           "wifi",
@@ -40,16 +40,16 @@ async function main() {
       },
     });
 
-    console.log("Villa Elara seeded");
+    console.log("Sunset Villa seeded");
 
     // Seed contact info
     await prisma.contactInfo.create({
       data: {
         villaId: villa.id,
         ownerFullName: "Villa Owner",
-        ownerDisplayName: "Villa Elara",
-        email: "info@villaelara.com",
-        streetAddress: "Villa Elara",
+        ownerDisplayName: "Sunset Villa",
+        email: "info@sunsetvilla.com",
+        streetAddress: "Sunset Villa",
         city: "Greece",
         postalCode: "00000",
         country: "GR",

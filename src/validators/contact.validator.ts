@@ -14,3 +14,12 @@ export const updateContactSchema = z.object({
 });
 
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+
+export const contactInquirySchema = z.object({
+  name: z.string().min(1, "Required").max(100),
+  email: z.string().min(1, "Required").email("Must be a valid email"),
+  subject: z.string().min(1, "Required").max(200),
+  message: z.string().min(1, "Required").max(5000),
+});
+
+export type ContactInquiryInput = z.infer<typeof contactInquirySchema>;

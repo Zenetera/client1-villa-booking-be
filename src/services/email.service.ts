@@ -41,7 +41,7 @@ interface AdminBookingRequestData extends BookingEmailData {
 
 export async function sendBookingReceived(data: BookingEmailData) {
   await transporter.sendMail({
-    from: `"Villa Elara" <${env.DEFAULT_FROM_EMAIL}>`,
+    from: `"Sunset Villa" <${env.DEFAULT_FROM_EMAIL}>`,
     to: data.guestEmail,
     subject: `Booking Request Received — ${data.referenceCode}`,
     html: `
@@ -63,7 +63,7 @@ export async function sendBookingReceived(data: BookingEmailData) {
         </table>
 
         <p>You will receive a confirmation email once your booking is approved.</p>
-        <p>Best regards,<br/>Villa Elara</p>
+        <p>Best regards,<br/>Sunset Villa</p>
       </div>
     `,
   });
@@ -74,7 +74,7 @@ export async function sendAdminBookingRequest(data: AdminBookingRequestData) {
   const adminUrl = `${env.FRONTEND_URL.replace(/\/$/, "")}/admin`;
 
   await transporter.sendMail({
-    from: `"Villa Elara" <${env.DEFAULT_FROM_EMAIL}>`,
+    from: `"Sunset Villa" <${env.DEFAULT_FROM_EMAIL}>`,
     to: adminEmail,
     replyTo: data.guestEmail,
     subject: `New Booking Request — ${data.referenceCode} (${data.checkIn} → ${data.checkOut})`,
@@ -114,7 +114,7 @@ export async function sendAdminBookingRequest(data: AdminBookingRequestData) {
 
 export async function sendBookingConfirmed(data: BookingEmailData) {
   await transporter.sendMail({
-    from: `"Villa Elara" <${env.DEFAULT_FROM_EMAIL}>`,
+    from: `"Sunset Villa" <${env.DEFAULT_FROM_EMAIL}>`,
     to: data.guestEmail,
     subject: `Booking Confirmed — ${data.referenceCode}`,
     html: `
@@ -136,7 +136,42 @@ export async function sendBookingConfirmed(data: BookingEmailData) {
         </table>
 
         <p>We look forward to welcoming you!</p>
-        <p>Best regards,<br/>Villa Elara</p>
+        <p>Best regards,<br/>Sunset Villa</p>
+      </div>
+    `,
+  });
+}
+
+interface ContactInquiryData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export async function sendContactInquiry(data: ContactInquiryData) {
+  const adminEmail = env.ADMIN_EMAIL || env.DEFAULT_FROM_EMAIL;
+
+  await transporter.sendMail({
+    from: `"Sunset Villa" <${env.DEFAULT_FROM_EMAIL}>`,
+    to: adminEmail,
+    replyTo: data.email,
+    subject: `Website Inquiry — ${data.subject}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>New Contact Inquiry</h2>
+        <p>A message has been submitted through the website contact form.</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 8px 0; color: #666;">From</td><td style="padding: 8px 0;">${escapeHtml(data.name)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Email</td><td style="padding: 8px 0;">${escapeHtml(data.email)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Subject</td><td style="padding: 8px 0;">${escapeHtml(data.subject)}</td></tr>
+        </table>
+
+        <div style="margin: 20px 0; padding: 12px; background: #f8f8f8; border-left: 2px solid #ddd;">
+          <div style="color: #666; margin-bottom: 6px;">Message</div>
+          <div style="white-space: pre-wrap;">${escapeHtml(data.message)}</div>
+        </div>
       </div>
     `,
   });
@@ -147,7 +182,7 @@ export async function sendBookingCancelled(
   reason: string
 ) {
   await transporter.sendMail({
-    from: `"Villa Elara" <${env.DEFAULT_FROM_EMAIL}>`,
+    from: `"Sunset Villa" <${env.DEFAULT_FROM_EMAIL}>`,
     to: data.guestEmail,
     subject: `Booking Cancelled — ${data.referenceCode}`,
     html: `
@@ -159,7 +194,7 @@ export async function sendBookingCancelled(
         <p><strong>Reason:</strong> ${escapeHtml(reason)}</p>
 
         <p>If you have any questions, please don't hesitate to contact us.</p>
-        <p>Best regards,<br/>Villa Elara</p>
+        <p>Best regards,<br/>Sunset Villa</p>
       </div>
     `,
   });

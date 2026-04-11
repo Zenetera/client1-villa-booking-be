@@ -20,6 +20,7 @@ router.post("/bookings", asyncHandler(bookingController.createBooking));
 
 // Contact info
 router.get("/villa/contact", asyncHandler(contactController.getContactInfo));
+router.post("/contact/inquiry", asyncHandler(contactController.submitContactInquiry));
 
 // Site pages (legal pages, etc.)
 router.get("/pages/:slug", asyncHandler(sitePageController.getPageBySlug));

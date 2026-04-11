@@ -1,7 +1,7 @@
 {
   "name": "villa-elara-backend",
   "version": "1.0.0",
-  "description": "Villa Elara direct-booking backend API",
+  "description": "Sunset Villa direct-booking backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon",

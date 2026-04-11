@@ -1,10 +1,10 @@
 const openApiDocument = {
   openapi: "3.0.3",
   info: {
-    title: "Synset V Booking API",
+    title: "Sunset Villa Booking API",
     version: "1.2.0",
     description:
-      "API documentation for the Villa Elara backend with endpoint-specific request and response schemas.",
+      "API documentation for the Sunset Villa backend with endpoint-specific request and response schemas.",
   },
   servers: [],
   tags: [
