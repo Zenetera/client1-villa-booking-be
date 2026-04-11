@@ -9,6 +9,20 @@ import type {
   UpdateBookingInput,
 } from "../validators/booking.validator";
 
+function depositDisplay(
+  totalPrice: Prisma.Decimal,
+  depositAmount: Prisma.Decimal | null
+): { depositAmount: string; depositPercentage: string } {
+  const amount = depositAmount ?? new Prisma.Decimal(0);
+  const pct = totalPrice.gt(0)
+    ? amount.div(totalPrice).mul(100)
+    : new Prisma.Decimal(0);
+  return {
+    depositAmount: amount.toFixed(2),
+    depositPercentage: pct.toFixed(2),
+  };
+}
+
 export async function createBooking(villaId: number, input: CreateBookingInput) {
   const checkIn = new Date(input.checkIn);
   const checkOut = new Date(input.checkOut);
@@ -83,6 +97,7 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
         nightlyRate: pricing.nightlyRate,
         touristTaxTotal: pricing.touristTaxTotal,
         totalPrice: pricing.totalPrice,
+        depositAmount: pricing.depositAmount,
         status: "pending",
         guestMessage: input.guestMessage || null,
       },
@@ -113,6 +128,8 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
       nightlyRate: pricing.nightlyRate.toFixed(2),
       touristTaxTotal: pricing.touristTaxTotal.toFixed(2),
       totalPrice: pricing.totalPrice.toFixed(2),
+      depositAmount: pricing.depositAmount.toFixed(2),
+      depositPercentage: pricing.depositPercentage.toFixed(2),
     })
     .catch((err) => console.error("Failed to send booking email:", err));
 
@@ -131,6 +148,8 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
       nightlyRate: pricing.nightlyRate.toFixed(2),
       touristTaxTotal: pricing.touristTaxTotal.toFixed(2),
       totalPrice: pricing.totalPrice.toFixed(2),
+      depositAmount: pricing.depositAmount.toFixed(2),
+      depositPercentage: pricing.depositPercentage.toFixed(2),
     })
     .catch((err) => console.error("Failed to send admin notification email:", err));
 
@@ -199,6 +218,7 @@ export async function confirmBooking(id: number, adminNotes?: string) {
       nightlyRate: updated.nightlyRate.toFixed(2),
       touristTaxTotal: updated.touristTaxTotal.toFixed(2),
       totalPrice: updated.totalPrice.toFixed(2),
+      ...depositDisplay(updated.totalPrice, updated.depositAmount),
     })
     .catch((err) => console.error("Failed to send confirmation email:", err));
 
@@ -425,6 +445,7 @@ export async function updateBooking(id: number, input: UpdateBookingInput) {
         nightlyRate: updated.nightlyRate.toFixed(2),
         touristTaxTotal: updated.touristTaxTotal.toFixed(2),
         totalPrice: updated.totalPrice.toFixed(2),
+        ...depositDisplay(updated.totalPrice, updated.depositAmount),
       })
       .catch((err) => console.error("Failed to send confirmation email:", err));
   }

@@ -81,6 +81,8 @@ export async function getPricingQuote(req: Request, res: Response) {
       touristTaxPerNight: pricing.touristTaxPerNight.toFixed(2),
       touristTaxTotal: pricing.touristTaxTotal.toFixed(2),
       totalPrice: pricing.totalPrice.toFixed(2),
+      depositPercentage: pricing.depositPercentage.toFixed(2),
+      depositAmount: pricing.depositAmount.toFixed(2),
     })
   );
 }

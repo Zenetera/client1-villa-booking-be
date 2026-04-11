@@ -14,6 +14,8 @@ export interface PricingBreakdown {
   touristTaxPerNight: Prisma.Decimal;
   touristTaxTotal: Prisma.Decimal;
   totalPrice: Prisma.Decimal;
+  depositPercentage: Prisma.Decimal;
+  depositAmount: Prisma.Decimal;
   numNights: number;
 }
 
@@ -24,7 +26,7 @@ export async function calculatePricing(
 ): Promise<PricingBreakdown> {
   const villa = await prisma.villa.findUniqueOrThrow({
     where: { id: villaId },
-    select: { basePricePerNight: true, touristTaxPerNight: true },
+    select: { basePricePerNight: true, touristTaxPerNight: true, depositPercentage: true },
   });
 
   const numNights = Math.round(
@@ -68,6 +70,7 @@ export async function calculatePricing(
   const nightlyRate = accommodationTotal.div(numNights);
   const touristTaxTotal = villa.touristTaxPerNight.mul(numNights);
   const totalPrice = accommodationTotal.add(touristTaxTotal);
+  const depositAmount = totalPrice.mul(villa.depositPercentage).div(100);
 
   return {
     nights,
@@ -76,6 +79,8 @@ export async function calculatePricing(
     touristTaxPerNight: villa.touristTaxPerNight,
     touristTaxTotal,
     totalPrice,
+    depositPercentage: villa.depositPercentage,
+    depositAmount,
     numNights,
   };
 }

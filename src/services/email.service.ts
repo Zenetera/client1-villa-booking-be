@@ -30,6 +30,8 @@ interface BookingEmailData {
   nightlyRate: string;
   touristTaxTotal: string;
   totalPrice: string;
+  depositAmount: string;
+  depositPercentage: string;
 }
 
 interface AdminBookingRequestData extends BookingEmailData {
@@ -57,6 +59,7 @@ export async function sendBookingReceived(data: BookingEmailData) {
           <tr><td style="padding: 8px 0; color: #666;">Nightly Rate</td><td style="padding: 8px 0;">€${data.nightlyRate}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Tourist Tax</td><td style="padding: 8px 0;">€${data.touristTaxTotal}</td></tr>
           <tr style="border-top: 1px solid #eee;"><td style="padding: 8px 0; font-weight: 500;">Total</td><td style="padding: 8px 0; font-weight: 500;">€${data.totalPrice}</td></tr>
+          <tr><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">Deposit (${data.depositPercentage}%)</td><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">€${data.depositAmount}</td></tr>
         </table>
 
         <p>You will receive a confirmation email once your booking is approved.</p>
@@ -92,6 +95,7 @@ export async function sendAdminBookingRequest(data: AdminBookingRequestData) {
           <tr><td style="padding: 8px 0; color: #666;">Nightly Rate</td><td style="padding: 8px 0;">€${data.nightlyRate}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Tourist Tax</td><td style="padding: 8px 0;">€${data.touristTaxTotal}</td></tr>
           <tr style="border-top: 1px solid #eee;"><td style="padding: 8px 0; font-weight: 500;">Total</td><td style="padding: 8px 0; font-weight: 500;">€${data.totalPrice}</td></tr>
+          <tr><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">Deposit (${data.depositPercentage}%)</td><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">€${data.depositAmount}</td></tr>
         </table>
 
         ${
@@ -128,6 +132,7 @@ export async function sendBookingConfirmed(data: BookingEmailData) {
           <tr><td style="padding: 8px 0; color: #666;">Nightly Rate</td><td style="padding: 8px 0;">€${data.nightlyRate}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Tourist Tax</td><td style="padding: 8px 0;">€${data.touristTaxTotal}</td></tr>
           <tr style="border-top: 1px solid #eee;"><td style="padding: 8px 0; font-weight: 500;">Total</td><td style="padding: 8px 0; font-weight: 500;">€${data.totalPrice}</td></tr>
+          <tr><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">Deposit (${data.depositPercentage}%)</td><td style="padding: 4px 0 8px; color: #666; font-size: 12px;">€${data.depositAmount}</td></tr>
         </table>
 
         <p>We look forward to welcoming you!</p>
