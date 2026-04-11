@@ -24,6 +24,7 @@ const envSchema = z.object({
   EMAIL_HOST_USER: z.string().min(1),
   EMAIL_HOST_PASSWORD: z.string().min(1),
   DEFAULT_FROM_EMAIL: z.string().email(),
+  ADMIN_EMAIL: z.string().email().optional(),
 
   // App
   PORT: z.coerce.number().default(8000),

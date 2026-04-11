@@ -49,7 +49,6 @@ export async function calculatePricing(
 
     const matchingRule = rules.find((rule) => {
       if (nightDate < rule.startDate || nightDate > rule.endDate) return false;
-      if (rule.minNights !== null && numNights < rule.minNights) return false;
       return true;
     });
 
@@ -83,8 +82,7 @@ export async function calculatePricing(
 
 export async function getPriceForDate(
   villaId: number,
-  date: Date,
-  numNights: number
+  date: Date
 ): Promise<{ price: Prisma.Decimal; ruleName: string | null }> {
   const villa = await prisma.villa.findUniqueOrThrow({
     where: { id: villaId },
@@ -96,7 +94,6 @@ export async function getPriceForDate(
       villaId,
       startDate: { lte: date },
       endDate: { gte: date },
-      OR: [{ minNights: null }, { minNights: { lte: numNights } }],
     },
     orderBy: { priority: "desc" },
   });

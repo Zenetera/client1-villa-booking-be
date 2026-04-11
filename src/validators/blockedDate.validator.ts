@@ -17,9 +17,9 @@ export const createBlockedDateSchema = z
   .object({
     startDate: dateString,
     endDate: dateString,
-    reason: z.string().min(1, "Reason is required"),
+    reason: z.string().min(1).default("manual"),
   })
-  .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
+  .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
     message: "End date must be on or after start date",
     path: ["endDate"],
   });
@@ -29,4 +29,5 @@ export type CreateBlockedDateInput = z.infer<typeof createBlockedDateSchema>;
 export const blockedDateQuerySchema = z.object({
   from: dateString.optional(),
   to: dateString.optional(),
+  scope: z.enum(["manual", "all"]).optional(),
 });

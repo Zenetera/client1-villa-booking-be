@@ -19,7 +19,6 @@ export const createPricingRuleSchema = z
     startDate: dateString,
     endDate: dateString,
     pricePerNight: z.number().positive("Price per night must be positive"),
-    minNights: z.number().int().positive().nullable().optional(),
     priority: z.number().int().min(0).default(0),
   })
   .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
@@ -35,7 +34,6 @@ export const updatePricingRuleSchema = z
     startDate: dateString.optional(),
     endDate: dateString.optional(),
     pricePerNight: z.number().positive().optional(),
-    minNights: z.number().int().positive().nullable().optional(),
     priority: z.number().int().min(0).optional(),
   })
   .refine(

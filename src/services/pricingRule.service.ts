@@ -29,7 +29,6 @@ export async function createPricingRule(
       startDate: new Date(input.startDate),
       endDate: new Date(input.endDate),
       pricePerNight: new Prisma.Decimal(input.pricePerNight),
-      minNights: input.minNights ?? null,
       priority: input.priority,
     },
   });
@@ -54,7 +53,6 @@ export async function updatePricingRule(
       ...(input.pricePerNight !== undefined && {
         pricePerNight: new Prisma.Decimal(input.pricePerNight),
       }),
-      ...(input.minNights !== undefined && { minNights: input.minNights }),
       ...(input.priority !== undefined && { priority: input.priority }),
     },
   });

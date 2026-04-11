@@ -4,7 +4,10 @@ import { generateReferenceCode } from "../utils/referenceCode";
 import { calculatePricing } from "./pricing.service";
 import { checkAvailability } from "./availability.service";
 import * as emailService from "./email.service";
-import type { CreateBookingInput } from "../validators/booking.validator";
+import type {
+  CreateBookingInput,
+  UpdateBookingInput,
+} from "../validators/booking.validator";
 
 export async function createBooking(villaId: number, input: CreateBookingInput) {
   const checkIn = new Date(input.checkIn);
@@ -47,7 +50,8 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
     );
   }
 
-  // Check availability (optimistic, enforced again inside transaction)
+  // Pending bookings only check against admin-blocked / confirmed-booked dates.
+  // Multiple pending requests on the same range are allowed.
   const { available, conflictingDates } = await checkAvailability(
     villaId,
     checkIn,
@@ -60,74 +64,37 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
     );
   }
 
-  // Calculate pricing
   const pricing = await calculatePricing(villaId, checkIn, checkOut);
-
-  // Generate reference code
   const referenceCode = await generateReferenceCode();
 
-  // Build blocked dates for the stay (checkIn to checkOut - 1)
-  const blockedDatesData: { villaId: number; date: Date; reason: string }[] = [];
-  for (let i = 0; i < numNights; i++) {
-    const d = new Date(checkIn.getTime());
-    d.setUTCDate(d.getUTCDate() + i);
-    blockedDatesData.push({
-      villaId,
-      date: d,
-      reason: `Booking ${referenceCode}`,
-    });
-  }
-
-  // Create booking + blocked dates in a transaction
-  // The unique constraint on blocked_dates(villa_id, date) enforces availability at the DB level
   let booking;
   try {
-    booking = await prisma.$transaction(async (tx) => {
-      const newBooking = await tx.booking.create({
-        data: {
-          villaId,
-          referenceCode,
-          guestName: input.guestName,
-          guestEmail: input.guestEmail,
-          guestPhone: input.guestPhone,
-          checkIn,
-          checkOut,
-          numGuests: input.numGuests,
-          numNights,
-          nightlyRate: pricing.nightlyRate,
-          touristTaxTotal: pricing.touristTaxTotal,
-          totalPrice: pricing.totalPrice,
-          status: "pending",
-          guestMessage: input.guestMessage || null,
-        },
-      });
-
-      // Create blocked dates linked to this booking
-      // Unique constraint violation here means a concurrent booking claimed the dates
-      await tx.blockedDate.createMany({
-        data: blockedDatesData.map((bd) => ({
-          ...bd,
-          bookingId: newBooking.id,
-        })),
-      });
-
-      return newBooking;
+    booking = await prisma.booking.create({
+      data: {
+        villaId,
+        referenceCode,
+        guestName: input.guestName,
+        guestEmail: input.guestEmail,
+        guestPhone: input.guestPhone,
+        checkIn,
+        checkOut,
+        numGuests: input.numGuests,
+        numNights,
+        nightlyRate: pricing.nightlyRate,
+        touristTaxTotal: pricing.touristTaxTotal,
+        totalPrice: pricing.totalPrice,
+        status: "pending",
+        guestMessage: input.guestMessage || null,
+      },
     });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      const target = err.meta?.target as string[] | undefined;
-      if (target?.includes("reference_code")) {
-        throw new BookingError(
-          "Failed to generate booking reference, please try again",
-          "general"
-        );
-      }
       throw new BookingError(
-        "Selected dates are no longer available",
-        "checkIn"
+        "Failed to generate booking reference, please try again",
+        "general"
       );
     }
     throw err;
@@ -149,6 +116,24 @@ export async function createBooking(villaId: number, input: CreateBookingInput) 
     })
     .catch((err) => console.error("Failed to send booking email:", err));
 
+  // Notify admin of the new request so they can confirm/cancel asap
+  emailService
+    .sendAdminBookingRequest({
+      referenceCode: booking.referenceCode,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      guestPhone: booking.guestPhone,
+      guestMessage: booking.guestMessage,
+      checkIn: input.checkIn,
+      checkOut: input.checkOut,
+      numGuests: booking.numGuests,
+      numNights: booking.numNights,
+      nightlyRate: pricing.nightlyRate.toFixed(2),
+      touristTaxTotal: pricing.touristTaxTotal.toFixed(2),
+      totalPrice: pricing.totalPrice.toFixed(2),
+    })
+    .catch((err) => console.error("Failed to send admin notification email:", err));
+
   return { booking, pricing };
 }
 
@@ -162,19 +147,45 @@ export async function confirmBooking(id: number, adminNotes?: string) {
     );
   }
 
-  const updated = await prisma.booking.update({
-    where: { id, status: "pending" },
-    data: {
-      status: "confirmed",
-      confirmedAt: new Date(),
-      adminNotes: adminNotes ?? booking.adminNotes,
-    },
-  }).catch((err) => {
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
-      throw new BookingError("Booking status has changed, please refresh", "status");
+  const blockedDatesData = buildStayBlockedDates(
+    booking.villaId,
+    booking.checkIn,
+    booking.numNights,
+    booking.referenceCode
+  );
+
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      const confirmed = await tx.booking.update({
+        where: { id, status: "pending" },
+        data: {
+          status: "confirmed",
+          confirmedAt: new Date(),
+          adminNotes: adminNotes ?? booking.adminNotes,
+        },
+      });
+
+      await tx.blockedDate.createMany({
+        data: blockedDatesData.map((bd) => ({ ...bd, bookingId: id })),
+      });
+
+      return confirmed;
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        throw new BookingError("Booking status has changed, please refresh", "status");
+      }
+      if (err.code === "P2002") {
+        throw new BookingError(
+          "Cannot confirm — these dates are already booked or blocked",
+          "status"
+        );
+      }
     }
     throw err;
-  });
+  }
 
   emailService
     .sendBookingConfirmed({
@@ -283,10 +294,21 @@ export async function getBookingById(id: number) {
 
 export async function listBookings(opts: {
   status?: string;
+  search?: string;
   page: number;
   limit: number;
 }) {
-  const where = opts.status ? { status: opts.status } : {};
+  const where: Prisma.BookingWhereInput = {};
+  if (opts.status && opts.status !== "all") {
+    where.status = opts.status;
+  }
+  if (opts.search) {
+    where.OR = [
+      { guestName: { contains: opts.search, mode: "insensitive" } },
+      { referenceCode: { contains: opts.search, mode: "insensitive" } },
+      { guestEmail: { contains: opts.search, mode: "insensitive" } },
+    ];
+  }
   const skip = (opts.page - 1) * opts.limit;
 
   const [bookings, total] = await Promise.all([
@@ -309,6 +331,159 @@ export async function listBookings(opts: {
       totalPages: Math.ceil(total / opts.limit),
     },
   };
+}
+
+export async function updateBooking(id: number, input: UpdateBookingInput) {
+  const booking = await prisma.booking.findUniqueOrThrow({ where: { id } });
+
+  const isStatusChanging = input.status !== undefined && input.status !== booking.status;
+
+  // Validate status transitions
+  if (isStatusChanging) {
+    const from = booking.status;
+    const to = input.status!;
+    const allowed: Record<string, string[]> = {
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["completed", "cancelled"],
+      completed: [],
+      cancelled: [],
+    };
+    if (!allowed[from]?.includes(to)) {
+      throw new BookingError(
+        `Cannot change status from "${from}" to "${to}"`,
+        "status"
+      );
+    }
+  }
+
+  const data: Prisma.BookingUpdateInput = {};
+  if (input.status !== undefined) data.status = input.status;
+  if (input.paymentStatus !== undefined) data.paymentStatus = input.paymentStatus;
+  if (input.adminNotes !== undefined) data.adminNotes = input.adminNotes;
+  if (input.cancellationReason !== undefined)
+    data.cancellationReason = input.cancellationReason;
+
+  if (isStatusChanging && input.status === "confirmed") {
+    data.confirmedAt = new Date();
+  }
+  if (isStatusChanging && input.status === "cancelled") {
+    data.cancelledAt = new Date();
+  }
+
+  let updated;
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.booking.update({
+        where: { id, status: booking.status },
+        data,
+      });
+
+      if (isStatusChanging && input.status === "confirmed") {
+        const blockedDatesData = buildStayBlockedDates(
+          booking.villaId,
+          booking.checkIn,
+          booking.numNights,
+          booking.referenceCode
+        );
+        await tx.blockedDate.createMany({
+          data: blockedDatesData.map((bd) => ({ ...bd, bookingId: id })),
+        });
+      }
+
+      if (isStatusChanging && input.status === "cancelled") {
+        await tx.blockedDate.deleteMany({ where: { bookingId: id } });
+      }
+
+      return result;
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === "P2025") {
+        throw new BookingError("Booking has changed, please refresh", "status");
+      }
+      if (err.code === "P2002") {
+        throw new BookingError(
+          "Cannot confirm — these dates are already booked or blocked",
+          "status"
+        );
+      }
+    }
+    throw err;
+  }
+
+  // Fire-and-forget emails on confirm/cancel transitions
+  if (isStatusChanging && input.status === "confirmed") {
+    emailService
+      .sendBookingConfirmed({
+        referenceCode: updated.referenceCode,
+        guestName: updated.guestName,
+        guestEmail: updated.guestEmail,
+        checkIn: updated.checkIn.toISOString().split("T")[0],
+        checkOut: updated.checkOut.toISOString().split("T")[0],
+        numGuests: updated.numGuests,
+        numNights: updated.numNights,
+        nightlyRate: updated.nightlyRate.toFixed(2),
+        touristTaxTotal: updated.touristTaxTotal.toFixed(2),
+        totalPrice: updated.totalPrice.toFixed(2),
+      })
+      .catch((err) => console.error("Failed to send confirmation email:", err));
+  }
+  if (isStatusChanging && input.status === "cancelled") {
+    emailService
+      .sendBookingCancelled(
+        {
+          referenceCode: updated.referenceCode,
+          guestName: updated.guestName,
+          guestEmail: updated.guestEmail,
+          checkIn: updated.checkIn.toISOString().split("T")[0],
+          checkOut: updated.checkOut.toISOString().split("T")[0],
+        },
+        updated.cancellationReason || "Cancelled by admin"
+      )
+      .catch((err) => console.error("Failed to send cancellation email:", err));
+  }
+
+  return updated;
+}
+
+export async function findOverlappingPending(id: number) {
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  if (!booking) return [];
+
+  const lastNight = new Date(booking.checkOut.getTime());
+  lastNight.setUTCDate(lastNight.getUTCDate() - 1);
+
+  return prisma.booking.findMany({
+    where: {
+      id: { not: id },
+      villaId: booking.villaId,
+      status: "pending",
+      checkIn: { lte: lastNight },
+      checkOut: { gt: booking.checkIn },
+    },
+    select: {
+      id: true,
+      referenceCode: true,
+      guestName: true,
+      checkIn: true,
+      checkOut: true,
+    },
+  });
+}
+
+function buildStayBlockedDates(
+  villaId: number,
+  checkIn: Date,
+  numNights: number,
+  referenceCode: string
+) {
+  const dates: { villaId: number; date: Date; reason: string }[] = [];
+  for (let i = 0; i < numNights; i++) {
+    const d = new Date(checkIn.getTime());
+    d.setUTCDate(d.getUTCDate() + i);
+    dates.push({ villaId, date: d, reason: `Booking ${referenceCode}` });
+  }
+  return dates;
 }
 
 export async function exportBookings(opts: {

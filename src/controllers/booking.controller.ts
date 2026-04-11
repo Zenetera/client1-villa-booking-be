@@ -9,8 +9,10 @@ import {
   cancelBookingSchema,
   bookingListQuerySchema,
   exportBookingsQuerySchema,
+  updateBookingSchema,
 } from "../validators/booking.validator";
 import { successResponse, errorResponse } from "../utils/apiResponse";
+import { serializeBooking } from "../utils/serializeBooking";
 import prisma from "../config/database";
 
 // Public
@@ -32,7 +34,7 @@ export async function createBooking(req: Request, res: Response) {
 
     res.status(201).json(
       successResponse({
-        booking,
+        booking: serializeBooking(booking),
         pricing: {
           numNights: pricing.numNights,
           nights: pricing.nights.map((n) => ({
@@ -64,7 +66,7 @@ export async function getBookingByReference(req: Request, res: Response) {
     return;
   }
 
-  res.json(successResponse(booking));
+  res.json(successResponse(serializeBooking(booking)));
 }
 
 // Admin
@@ -74,11 +76,48 @@ export async function listBookings(req: AuthRequest, res: Response) {
 
   const result = await bookingService.listBookings({
     status: query.status,
+    search: query.search,
     page: query.page,
     limit: query.limit,
   });
 
-  res.json(successResponse(result));
+  res.json(
+    successResponse({
+      bookings: result.bookings.map(serializeBooking),
+      pagination: result.pagination,
+    })
+  );
+}
+
+export async function updateBooking(req: AuthRequest, res: Response) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json(errorResponse("Invalid booking ID", "id"));
+    return;
+  }
+
+  const body = updateBookingSchema.parse(req.body);
+
+  try {
+    const booking = await bookingService.updateBooking(id, body);
+    res.json(successResponse(serializeBooking(booking)));
+  } catch (err) {
+    if (err instanceof BookingError) {
+      res.status(400).json(errorResponse(err.message, err.field));
+      return;
+    }
+    throw err;
+  }
+}
+
+export async function getOverlappingPending(req: AuthRequest, res: Response) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json(errorResponse("Invalid booking ID", "id"));
+    return;
+  }
+  const overlaps = await bookingService.findOverlappingPending(id);
+  res.json(successResponse(overlaps));
 }
 
 export async function getBooking(req: AuthRequest, res: Response) {
@@ -94,7 +133,7 @@ export async function getBooking(req: AuthRequest, res: Response) {
     return;
   }
 
-  res.json(successResponse(booking));
+  res.json(successResponse(serializeBooking(booking)));
 }
 
 export async function confirmBooking(req: AuthRequest, res: Response) {
@@ -187,6 +226,7 @@ export async function exportBookings(req: AuthRequest, res: Response) {
   const headers = [
     "Reference",
     "Status",
+    "Payment Status",
     "Guest Name",
     "Guest Email",
     "Guest Phone",
@@ -206,6 +246,7 @@ export async function exportBookings(req: AuthRequest, res: Response) {
     [
       b.referenceCode,
       b.status,
+      b.paymentStatus,
       csvEscape(b.guestName),
       csvEscape(b.guestEmail),
       csvEscape(b.guestPhone),

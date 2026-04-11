@@ -4,11 +4,12 @@ import type { CreateBlockedDateInput } from "../validators/blockedDate.validator
 
 export async function listBlockedDates(
   villaId: number,
-  opts: { from?: string; to?: string }
+  opts: { from?: string; to?: string; scope?: "manual" | "all" }
 ) {
+  const scope = opts.scope ?? "manual";
   const where: Prisma.BlockedDateWhereInput = {
     villaId,
-    bookingId: null, // Only manual blocks, not booking-generated ones
+    ...(scope === "manual" ? { bookingId: null } : {}),
     ...(opts.from || opts.to
       ? {
           date: {
