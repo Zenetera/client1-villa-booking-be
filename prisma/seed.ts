@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed villa
   const existingVilla = await prisma.villa.findFirst();
 
   if (!existingVilla) {
@@ -13,27 +12,27 @@ async function main() {
         descriptionEn:
           "A stunning luxury villa nestled in the heart of the Greek countryside, offering breathtaking views of the Aegean Sea. Sunset Villa combines traditional architecture with modern amenities to create an unforgettable holiday experience.",
         shortDescriptionEn:
-          "Luxury villa in Greece with stunning Aegean Sea views, private pool, and traditional charm.",
+          "Luxury villa in Greece with stunning Aegean Sea views, private pool and traditional charm.",
         bedrooms: 4,
-        bathrooms: 3,
-        maxGuests: 10,
+        bathrooms: 2,
+        maxGuests: 8,
         basePricePerNight: 250,
         currency: "EUR",
-        touristTaxPerNight: 15,
+        touristTaxPerNight: 5,
         minNights: 1,
         checkInTime: "15:00",
         checkOutTime: "11:00",
         address: "Sunset Villa, Greece",
         amenitiesEn: [
-          "pool",
-          "wifi",
-          "parking",
-          "air_conditioning",
-          "kitchen",
-          "washing_machine",
-          "bbq",
-          "garden",
-          "sea_view",
+          "Pool",
+          "Wi-fi",
+          "Parking",
+          "Air Conditioning",
+          "Kitchen",
+          "Washing Machine",
+          "BBQ",
+          "Garden",
+          "Sea View",
         ],
         houseRulesEn:
           "No smoking indoors. No parties or events. Quiet hours from 23:00 to 08:00.",
@@ -42,7 +41,6 @@ async function main() {
 
     console.log("Sunset Villa seeded");
 
-    // Seed contact info
     await prisma.contactInfo.create({
       data: {
         villaId: villa.id,
@@ -58,7 +56,6 @@ async function main() {
 
     console.log("Contact info seeded");
 
-    // Seed legal pages
     await prisma.sitePage.createMany({
       data: [
         {
